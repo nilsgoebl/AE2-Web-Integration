@@ -52,7 +52,10 @@
             min-width: 0;
         }
         #terminalCPUList button{
+            position: relative;
             text-align: left;
+            min-height: 54px;
+            padding-right: 58px;
         }
         .cpu-name-line, .cpu-job-line{
             display: flex;
@@ -60,7 +63,10 @@
             gap: 6px;
         }
         .cpu-job-line img.item-icon{
-            flex: 0 0 48px;
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
             width: 48px;
             height: 48px;
         }
@@ -71,6 +77,7 @@
             display: inline-flex;
             align-items: center;
             line-height: 1;
+            font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
         }
         .crafting-plan-layout{
             display: flex;
@@ -1056,7 +1063,7 @@
             return "<img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + image + "' />";
         }
         function getWebsiteOriginIconMarkup() {
-            return "<span class='website-origin-icon' title='Started from website' aria-label='Started from website'>🌐</span>";
+            return "<span class='website-origin-icon' title='Started from website' aria-label='Started from website'>&#127760;</span>";
         }
         function displayCPUList(){
             let html = "";
@@ -1092,13 +1099,12 @@
             data = data.data;
             let html = "";
             let iconsToFetch = [];
+            let cpuTitlePrefix = data['startedFromWebsite'] ? getWebsiteOriginIconMarkup() + " " : "";
             if (data['finalOutput'])
                 document.getElementById("terminalCPUHeaderText").innerHTML =
-                    selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'];
+                    cpuTitlePrefix + selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'];
             else
-                document.getElementById("terminalCPUHeaderText").innerHTML = selectedCPU + ": Idle";
-            if (data['startedFromWebsite'])
-                document.getElementById("terminalCPUHeaderText").innerHTML += " " + getWebsiteOriginIconMarkup();
+                document.getElementById("terminalCPUHeaderText").innerHTML = cpuTitlePrefix + selectedCPU + ": Idle";
             let hasTrackingInfo = data['hasTrackingInfo'];
             if (data['items'] && data['items'].length > 0) {
                 document.getElementById("cancelJobOnCPUButton").style.display = 'block';
