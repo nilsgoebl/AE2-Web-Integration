@@ -20,6 +20,7 @@ public class GetCPUList extends ISyncedRequest {
         public long coProcessors;
         public boolean hasTrackingInfo = false;
         public long timeStarted = 0L;
+        public boolean startedFromWebsite = false;
     }
 
     public static Map<String, ICraftingCPUCluster> getCPUList(IAECraftingGrid craftingGrid) {
@@ -51,6 +52,7 @@ public class GetCPUList extends ISyncedRequest {
             cpuInfo.usedStorage = cluster.web$getUsedStorage();
             cpuInfo.coProcessors = cluster.web$getCoProcessors();
             if (cpuInfo.isBusy = cluster.web$isBusy()) {
+                cpuInfo.startedFromWebsite = gridData.isWebsiteStartedCpu(entry.getKey());
                 cpuInfo.finalOutput = cluster.web$getFinalOutput();
                 AE2JobTracker.JobTrackingInfo trackingInfo = AE2JobTracker.findActiveJob(cluster);
                 if (cpuInfo.hasTrackingInfo = trackingInfo != null) {

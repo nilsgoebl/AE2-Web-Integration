@@ -45,6 +45,10 @@ public class GridData {
     @GSONUtils.SkipGSON
     private CraftingPlanRegistry craftingPlans = new CraftingPlanRegistry(System::nanoTime);
 
+    /** CPU names whose current job was submitted through this website. Runtime-only by design. */
+    @GSONUtils.SkipGSON
+    private final ConcurrentHashMap<String, Boolean> websiteStartedCpus = new ConcurrentHashMap<>();
+
     public int addJob(Future<IAECraftingJob> job) {
         return craftingPlans.add(job);
     }
@@ -61,10 +65,23 @@ public class GridData {
         return craftingPlans.cancel(jobId);
     }
 
+    public void markWebsiteStartedCpu(String cpuName) {
+        if (cpuName != null) websiteStartedCpus.put(cpuName, Boolean.TRUE);
+    }
+
+    public boolean isWebsiteStartedCpu(String cpuName) {
+        return cpuName != null && websiteStartedCpus.containsKey(cpuName);
+    }
+
+    public void clearWebsiteStartedCpu(String cpuName) {
+        if (cpuName != null) websiteStartedCpus.remove(cpuName);
+    }
+
     public static synchronized void clearRuntimeState() {
         for (GridData gridData : gridDataMap.values()) {
             gridData.craftingPlans.clearForServerStop();
             gridData.trackingInfo.clearHistory();
+            gridData.websiteStartedCpus.clear();
         }
         craftingPlanMaintenanceCursor = null;
     }

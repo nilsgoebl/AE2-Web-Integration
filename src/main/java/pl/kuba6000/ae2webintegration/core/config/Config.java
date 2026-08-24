@@ -90,7 +90,18 @@ public class Config {
      */
     public static File getIconsDirectory() {
         String value = ICONS_DIRECTORY();
-        if (value == null || value.isEmpty()) {
+        if (value == null) {
+            return null;
+        }
+        // Forge 1.7.10's Configuration does not strip quoting characters when a string value was
+        // written or hand-edited with them present ("icons"), so tolerate both spellings.
+        value = value.trim();
+        if (value.length() >= 2
+            && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")))) {
+            value = value.substring(1, value.length() - 1)
+                .trim();
+        }
+        if (value.isEmpty()) {
             return null;
         }
         File directory = new File(value);

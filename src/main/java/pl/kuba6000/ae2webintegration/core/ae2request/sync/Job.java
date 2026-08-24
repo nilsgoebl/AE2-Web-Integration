@@ -16,6 +16,9 @@ import pl.kuba6000.ae2webintegration.core.interfaces.ICraftingCPUCluster;
 import pl.kuba6000.ae2webintegration.core.interfaces.ICraftingPlanSummary;
 import pl.kuba6000.ae2webintegration.core.interfaces.ICraftingPlanSummaryEntry;
 import pl.kuba6000.ae2webintegration.core.interfaces.service.IAECraftingGrid;
+import pl.kuba6000.ae2webintegration.core.AE2Controller;
+import pl.kuba6000.ae2webintegration.core.interfaces.IAEGenericStack;
+import pl.kuba6000.ae2webintegration.core.tracking.AE2JobTracker;
 import pl.kuba6000.ae2webintegration.core.interfaces.service.IAEStorageGrid;
 import pl.kuba6000.ae2webintegration.core.utils.HTTPUtils;
 
@@ -39,6 +42,7 @@ public class Job extends ISyncedRequest {
             public long missing;
             public long steps;
             public double usedPercent;
+            public int hashcode;
         }
     }
 
@@ -99,6 +103,7 @@ public class Job extends ISyncedRequest {
                         JSON_JobData.JobItem jobItem = new JSON_JobData.JobItem();
                         jobItem.itemid = key.web$getItemID();
                         jobItem.itemname = key.web$getDisplayName();
+                        jobItem.hashcode = rememberIcon(key);
                         jobItem.requested = entry.web$getCraftAmount();
                         jobItem.steps = entry.web$getCraftSteps();
                         jobItem.stored = entry.web$getStoredAmount();
@@ -148,6 +153,10 @@ public class Job extends ISyncedRequest {
                     if (error != null) {
                         deny("FAIL", error);
                     } else {
+                        if (target != null) {
+                            gridData.markWebsiteStartedCpu(cpuName);
+                            AE2JobTracker.markStartedFromWebsite(target);
+                        }
                         gridData.removeJob(this.jobID);
                         done();
                     }
@@ -159,6 +168,13 @@ public class Job extends ISyncedRequest {
                 deny("JOB_NOT_DONE");
             }
         }
+    }
+
+    private static int rememberIcon(IAEKey key) {
+        IAEGenericStack stack = (IAEGenericStack) key;
+        int hash = stack.hashCode();
+        AE2Controller.hashcodeToStack.put(hash, stack);
+        return hash;
     }
 
 }

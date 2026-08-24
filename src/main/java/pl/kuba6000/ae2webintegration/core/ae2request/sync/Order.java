@@ -18,6 +18,7 @@ import pl.kuba6000.ae2webintegration.core.utils.HTTPUtils;
 public class Order extends ISyncedRequest {
 
     private IAEKey itemKey;
+    private IAEGenericStack itemStack;
     private long quantity;
 
     @Override
@@ -40,12 +41,12 @@ public class Order extends ISyncedRequest {
             return false;
         }
         this.quantity = parsedQuantity;
-        IAEGenericStack stack = hashcodeToStack.get(hash);
-        if (stack == null) {
+        itemStack = hashcodeToStack.get(hash);
+        if (itemStack == null) {
             deny("ITEM_NOT_FOUND");
             return false;
         }
-        this.itemKey = stack.web$what();
+        this.itemKey = itemStack.web$what();
         return true;
     }
 
@@ -73,6 +74,12 @@ public class Order extends ISyncedRequest {
             int jobID = gridData.addJob(job);
             JsonObject jobData = new JsonObject();
             jobData.addProperty("jobID", jobID);
+            JsonObject finalOutput = new JsonObject();
+            finalOutput.addProperty("hashcode", itemStack.hashCode());
+            finalOutput.addProperty("itemid", itemKey.web$getItemID());
+            finalOutput.addProperty("itemname", itemKey.web$getDisplayName());
+            finalOutput.addProperty("quantity", quantity);
+            jobData.add("finalOutput", finalOutput);
             succeed(jobData);
         } else {
             deny("ALL_CPU_BUSY");

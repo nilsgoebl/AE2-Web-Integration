@@ -40,6 +40,7 @@ public class JSON_CompactedJobTrackingInfo {
     public long timeStarted;
     public long timeDone;
     public boolean wasCancelled;
+    public boolean startedFromWebsite;
     public ArrayList<CompactedTrackingGSONItem> items = new ArrayList<>();
 
     public static class AEInterfaceGSON {
@@ -60,6 +61,7 @@ public class JSON_CompactedJobTrackingInfo {
         this.timeDone = info.timeDone;
         long elapsed = this.timeDone - this.timeStarted;
         this.wasCancelled = info.wasCancelled;
+        this.startedFromWebsite = info.startedFromWebsite;
         for (Map.Entry<IAEKey, Long> entry : info.timeSpentOn.entrySet()) {
             IAEKey key = entry.getKey();
             long spent = entry.getValue();

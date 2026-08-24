@@ -25,6 +25,7 @@ public class GetCPU extends ISyncedRequest {
         public boolean hasTrackingInfo = false;
         public long timeStarted = 0L;
         public long timeElapsed = 0L;
+        public boolean startedFromWebsite = false;
     }
 
     String cpuName = null;
@@ -58,6 +59,7 @@ public class GetCPU extends ISyncedRequest {
         clusterData.size = cpu.web$getAvailableStorage();
         clusterData.isBusy = cpu.web$isBusy();
         if (clusterData.isBusy) {
+            clusterData.startedFromWebsite = gridData.isWebsiteStartedCpu(cpuName);
             clusterData.finalOutput = cpu.web$getFinalOutput();
             AE2JobTracker.JobTrackingInfo trackingInfo = AE2JobTracker.findActiveJob(cpu);
             clusterData.hasTrackingInfo = trackingInfo != null;

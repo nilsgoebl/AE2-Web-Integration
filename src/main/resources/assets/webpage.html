@@ -42,14 +42,40 @@
         td.storage{
             background-color: #2b3555;
         }
+        .storage-icon-row{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .storage-item-details{
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .crafting-plan-layout{
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .crafting-plan-result{
+            flex: 0 0 150px;
+            text-align: center;
+        }
+        .crafting-plan-result img.item-icon{
+            display: block;
+            margin: 6px auto;
+        }
+        .crafting-plan-items{
+            flex: 1 1 auto;
+            min-width: 0;
+        }
         td.missing{
             background-color: rgb(112, 0, 0);
             border-color: rgb(85, 0, 0);
         }
-        td img{
-            float: right;
-            width: 32px;
-            height: 32px;
+        td.storage img.item-icon{
+            flex: 0 0 48px;
+            width: 48px;
+            height: 48px;
         }
         body>h1{
             text-align: center;
@@ -691,6 +717,7 @@
     currentJob = {
         id: -1,
         itemHash: -1,
+        finalOutput: null,
         bytesTotal: -1,
     }
     function searchStringChanged(el){
@@ -1007,6 +1034,7 @@
             html += ">" + key;
             if (cluster['finalOutput'])
                 html += " - " + formatItemName(cluster['finalOutput'], false) + " x" + cluster['finalOutput']['quantity'];
+            if (cluster['startedFromWebsite']) html += " [Web]";
             html += "</button>";
         }
         document.getElementById('terminalCPUList').innerHTML = html;
@@ -1031,6 +1059,8 @@
                     selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'];
             else
                 document.getElementById("terminalCPUHeaderText").innerHTML = selectedCPU + ": Idle";
+            if (data['startedFromWebsite'])
+                document.getElementById("terminalCPUHeaderText").innerHTML += " [Started from website]";
             let hasTrackingInfo = data['hasTrackingInfo'];
             if (data['items'] && data['items'].length > 0) {
                 document.getElementById("cancelJobOnCPUButton").style.display = 'block';
@@ -1254,7 +1284,7 @@
                 imgSrc = "data:image/png;base64," + imgSrc;
             }
             if (settings.showItemIcon){
-                html += "<td class='storage'>" + formatItemName(item) + "<img id='itemicon" + item['hashcode'] + "' src='" + imgSrc + "' /><br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</td>";
+                html += "<td class='storage'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item) + "<br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</div><img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + imgSrc + "' /></div></td>";
             }
             else {
                 html += "<td class='storage'>" + formatItemName(item) + "<br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</td>";
@@ -1305,6 +1335,7 @@
                 if (trackingHistoryInfo['wasCancelled']){
                     html += " (was cancelled)";
                 }
+                if (trackingHistoryInfo['startedFromWebsite']) html += " [Started from website]";
                 html += "<br>Started " + new Date(Number(trackingHistoryInfo['timeStarted'])).toLocaleString();
                 html += "<br>Completed " + new Date(Number(trackingHistoryInfo['timeDone'])).toLocaleString();
                 html += "<br>Completed in " + formatTime(Number(trackingHistoryInfo['timeDone']) - Number(trackingHistoryInfo['timeStarted']));
@@ -1534,6 +1565,7 @@
             {
                 html += "Was cancelled!<br>";
             }
+            if(data['startedFromWebsite']) html += "Started from website.<br>";
             html += "Started:<br>- " + new Date(Number(data['timeStarted'])).toLocaleString();
             html += "<br>Completed:<br>- " + new Date(Number(data['timeDone'])).toLocaleString();
             html += "<br>Completed in " + formatTime(Number(data['timeDone']) - Number(data['timeStarted']));
@@ -1583,6 +1615,7 @@
                     cpuForJob = "";
                     currentJob.id = data['jobID'];
                     currentJob.itemHash = hashcode;
+                    currentJob.finalOutput = data['finalOutput'];
                     setTimeout(updateCraftingPlan, 1000);
                 }
                 else{
@@ -1622,14 +1655,30 @@
                 }
                 document.getElementById("terminalJobHeaderText").innerHTML = htmlHeader;
                 if (data['plan']){
-                    html += "<table><tr>";
+                    let iconsToFetch = [];
+                    function jobIcon(item){
+                        if (!settings.showItemIcon) return '';
+                        let image = getIcon(item);
+                        if (image === null){
+                            iconsToFetch.push(item);
+                            image = '';
+                        }
+                        else image = "data:image/png;base64," + image;
+                        return "<img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + image + "' />";
+                    }
+                    const finalOutput = currentJob.finalOutput;
+                    html += "<div class='crafting-plan-layout'>";
+                    if (finalOutput){
+                        html += "<aside class='crafting-plan-result'><strong>Result</strong>" + jobIcon(finalOutput) + formatItemName(finalOutput, false) + " x" + formatNumber(finalOutput['quantity']) + "</aside>";
+                    }
+                    html += "<div class='crafting-plan-items'><table><tr>";
                     let grid_i_max = settings.itemsPerRow;
                     let grid_i = 0;
                     let items = data['plan'];
                     for(let i = 0; i < items.length; i++){
                         let item = items[i];
 
-                        html += "<td class='" + (item['missing'] > 0 ? 'missing' : 'storage') + "'>" + formatItemName(item);
+                        html += "<td class='" + (item['missing'] > 0 ? 'missing' : 'storage') + "'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item);
                         if (item['missing'] > 0)
                             html += "<br>Missing: " + formatNumber(item['missing']);
                         if (item['requested'] > 0)
@@ -1640,7 +1689,7 @@
                             html += "<br>Available: " + formatNumber(item['stored']);
                         if (item['usedPercent'] > 0)
                             html += "<br>Used: " + formatPercent(item['usedPercent']);
-                        html += "</td>";
+                        html += "</div>" + jobIcon(item) + "</div></td>";
 
                         grid_i++;
                         if(grid_i == grid_i_max){
@@ -1648,7 +1697,8 @@
                             grid_i = 0;
                         }
                     }
-                    html += "</tr></table>";
+                    html += "</tr></table></div></div>";
+                    if (settings.showItemIcon && iconsToFetch.length > 0) fetchIcons(iconsToFetch);
                 }
                 console.log(html);
                 document.getElementById("terminalcontent").innerHTML = html;
@@ -1792,8 +1842,8 @@
     function applyIcons(byHash) {
         for (const hash in byHash){
             if (!(byHash.hasOwnProperty(hash))) continue;
-            const img = document.getElementById("itemicon" + hash);
-            if (img) img.src = "data:image/png;base64," + byHash[hash];
+            const images = document.querySelectorAll("img.item-icon[data-icon-hash='" + hash + "']");
+            for (let i = 0; i < images.length; i++) images[i].src = "data:image/png;base64," + byHash[hash];
         }
     }
 

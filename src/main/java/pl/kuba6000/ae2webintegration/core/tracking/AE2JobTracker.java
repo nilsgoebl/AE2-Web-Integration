@@ -65,6 +65,7 @@ public class AE2JobTracker {
         public HashMap<IAEKey, HashMap<AEInterface, HashSet<IAEKey>>> interfaceWaitingForLookup = new HashMap<>();
         public boolean isDone = false;
         public boolean wasCancelled = false;
+        public boolean startedFromWebsite = false;
 
         public long getTimeSpentOn(IAEKey key) {
             IAEKey resolved = AE2JobTracker.resolveKey(timeSpentOn, key);
@@ -100,6 +101,12 @@ public class AE2JobTracker {
 
     public static JobTrackingInfo findActiveJob(ICraftingCPUCluster cpu) {
         return trackingInfoMap.get(cpu);
+    }
+
+    /** Marks an already-submitted active CPU job as originating from the web UI. */
+    public static void markStartedFromWebsite(ICraftingCPUCluster cpu) {
+        JobTrackingInfo info = trackingInfoMap.get(cpu);
+        if (info != null) info.startedFromWebsite = true;
     }
 
     public static void clearActiveJobs() {
@@ -211,8 +218,9 @@ public class AE2JobTracker {
 
     public static void completeCrafting(IAEGrid grid, ICraftingCPUCluster cpu) {
         JobTrackingInfo info = trackingInfoMap.remove(cpu);
-        if (info == null) return;
         GridData gridData = GridData.getOrCreate(grid);
+        if (gridData != null) gridData.clearWebsiteStartedCpu(cpu.web$getName());
+        if (info == null) return;
         if (gridData == null || !gridData.isTracked) return;
         for (Map.Entry<IAEKey, Long> entry : info.waitingFor.entrySet()) {
             info.craftedTotal.merge(entry.getKey(), entry.getValue(), Long::sum);
