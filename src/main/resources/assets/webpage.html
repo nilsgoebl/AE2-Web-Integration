@@ -93,7 +93,7 @@
             flex: 1 1 auto;
             min-width: 0;
         }
-        #terminalCPUList button{
+        #terminalCPUList button, #terminalMobileCPUList button{
             position: relative;
             text-align: left;
             min-height: 54px;
@@ -114,6 +114,12 @@
         }
         .cpu-job-details{
             min-width: 0;
+        }
+        .cpu-quantity-icon{
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+            font-size: 1em;
         }
         .website-origin-icon{
             display: inline-flex;
@@ -300,6 +306,19 @@
             border: 0;
             padding: 5px;
             border-radius: 5px;
+            line-height: 1;
+        }
+        #terminalnav .terminal-nav-label{
+            display: block;
+            line-height: 24px;
+        }
+        #terminalnav .terminal-nav-icon,
+        #terminalnav .terminal-nav-crafting-icon,
+        #terminalnav .terminal-nav-terminal-icon{
+            flex: 0 0 24px;
+        }
+        #terminalnav img{
+            display: block;
         }
         #terminalheader input{
             font-size: 100%;
@@ -325,6 +344,24 @@
         }
         #terminalTerminalHeader input{
             flex: 1 1 220px;
+        }
+        #terminalCPUHeader, #terminalJobHeader{
+            flex-wrap: nowrap !important;
+        }
+        #terminalCPUHeaderText, #terminalJobHeaderText{
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #terminalCPUHeader button, #terminalJobHeader button{
+            flex: 0 0 auto;
+        }
+        .mobile-cpu-list{
+            display: none !important;
+        }
+        .mobile-filter-options{
+            display: none;
         }
         #terminalcontent{
             width: 100%;
@@ -388,7 +425,7 @@
 
         #terminalCPUList button, #terminalCPUListForJob button{
             width: 100%;
-            margin: 0;
+            margin: 3px 0;
             border-bottom: black dotted 1px;
             word-wrap: break-word;
         }
@@ -667,7 +704,7 @@
                 justify-content: center;
             }
             #terminalTerminalHeader > input{
-                width: auto;
+                width: auto !important;
                 flex: 1 1 180px;
             }
             #terminalTerminalHeader .mobile-terminal-options{
@@ -706,6 +743,7 @@
             }
             #terminaltypes{
                 width: 100%;
+                min-height: 0;
                 float: none;
                 order: 1;
             }
@@ -761,6 +799,48 @@
             #terminalOptions > section{
                 display: none;
             }
+            #terminaltypes > #terminalCPUList,
+            #terminaltypes > #terminalCPUListForJob{
+                display: none !important;
+            }
+            .mobile-filter-options{
+                display: none;
+                flex: 1 0 100%;
+                gap: 5px;
+                margin-top: 5px;
+            }
+            .mobile-filter-options button{
+                flex: 1 1 0;
+                width: auto !important;
+                margin: 0 !important;
+                font-size: 100% !important;
+            }
+            .mobile-cpu-list{
+                overflow-x: auto;
+                gap: 6px;
+                padding: 6px;
+                border-bottom: black solid 1px;
+                white-space: normal;
+            }
+            .mobile-cpu-list[style*="display: flex"]{
+                display: flex !important;
+            }
+            .mobile-cpu-list button{
+                position: relative;
+                flex: 0 0 min(260px, 78vw);
+                min-height: 54px;
+                padding: 5px 58px 5px 5px;
+                margin: 0;
+                text-align: left;
+            }
+            .mobile-cpu-list .cpu-job-line img.item-icon{
+                position: absolute;
+                right: 4px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 48px;
+                height: 48px;
+            }
             #terminalsubcontainersettings > section{
                 display: none;
                 font-size: 150%;
@@ -799,9 +879,9 @@
     <section id="terminaltypes">
         <section id='terminalOptions'>
             <section>
-                <button onclick='changeSortingBy(this);' id='sortByButton'>initializing</button>
-                <button onclick='changeStoredCraftable(this);' id='storedCraftableButton'>initializing</button>
-                <button onclick='changeSortOrder(this);' id='sortOrderButton'>initializing</button>
+                <button onclick='changeSortingBy(this);' id='sortByButton' data-filter-control='sortBy'>initializing</button>
+                <button onclick='changeStoredCraftable(this);' id='storedCraftableButton' data-filter-control='storedCraftable'>initializing</button>
+                <button onclick='changeSortOrder(this);' id='sortOrderButton' data-filter-control='sortOrder'>initializing</button>
                 <!-- <button>NEI Search?</button> -->
                 <!-- <button>Terminal style?</button> -->
                 <!-- <button onclick='alert("Coming soon");'>Crafting terminal</button>
@@ -836,10 +916,17 @@
                 <span class="terminal-nav-icon">⟳</span><span class="terminal-nav-label">Refresh</span>
             </button>
         </nav>
+        <section id='terminalMobileCPUList' class='mobile-cpu-list' style='display: none;'></section>
+        <section id='terminalMobileCPUListForJob' class='mobile-cpu-list' style='display: none;'></section>
         <section id="terminalheader">
             <section id="terminalTerminalHeader">
                 <input type="text" id="searchtext" placeholder="Search string" onkeyup="searchStringChanged(this);">
                 <button type="button" class="mobile-only mobile-terminal-options" aria-label="Toggle terminal filters" title="Terminal filters" onclick="toggleTerminalOptions();"><span class="filter-icon" aria-hidden="true"></span></button>
+                <section id="mobileTerminalOptions" class="mobile-filter-options">
+                    <button type="button" data-filter-control="sortBy" onclick="changeSortingBy(this);">initializing</button>
+                    <button type="button" data-filter-control="storedCraftable" onclick="changeStoredCraftable(this);">initializing</button>
+                    <button type="button" data-filter-control="sortOrder" onclick="changeSortOrder(this);">initializing</button>
+                </section>
             </section>
             <section id="terminalCPUHeader" style="display: none;">
                 <span id="terminalCPUHeaderText"></span>
@@ -908,8 +995,8 @@
     }
     const screens = [
         ["terminalOptions", "terminalTerminalHeader"],
-        ["terminalCPUList", "terminalCPUHeader"],
-        ["terminalCPUListForJob", "terminalJobHeader"],
+        ["terminalCPUList", "terminalMobileCPUList", "terminalCPUHeader"],
+        ["terminalCPUListForJob", "terminalMobileCPUListForJob", "terminalJobHeader"],
         ["terminalHistoryHeader", "terminalHistoryDetails"],
         ["terminalSettingsView"],
     ];
@@ -964,7 +1051,7 @@
     function changeSortingBy(el){
         sortingOptions.sortBy++;
         if (sortingOptions.sortBy > 2) sortingOptions.sortBy = 0;
-        el.innerHTML = sortByDisplay[sortingOptions.sortBy];
+        syncFilterButtons();
         sortItemList();
         displayItemList();
         setCookie("sortBy", sortingOptions.sortBy, 7);
@@ -972,14 +1059,14 @@
     function changeStoredCraftable(el){
         filteringOptions.storedCraftable++;
         if (filteringOptions.storedCraftable > 2) filteringOptions.storedCraftable = 0;
-        el.innerHTML = storedCraftableDisplay[filteringOptions.storedCraftable];
+        syncFilterButtons();
         displayItemList();
         setCookie("storedCraftable", filteringOptions.storedCraftable, 7);
     }
     function changeSortOrder(el){
         sortingOptions.sortOrder++;
         if (sortingOptions.sortOrder > 1) sortingOptions.sortOrder = 0;
-        el.innerHTML = sortOrderDisplay[sortingOptions.sortOrder];
+        syncFilterButtons();
         sortItemList();
         displayItemList();
         setCookie("sortOrder", sortingOptions.sortOrder, 7);
@@ -1061,14 +1148,23 @@
         cookie = getCookie("showItemIcon");
         if (cookie != "")
             settings.showItemIcon = Number(cookie) == 1;
-        document.getElementById('sortByButton').innerHTML = sortByDisplay[sortingOptions.sortBy];
-        document.getElementById('storedCraftableButton').innerHTML = storedCraftableDisplay[filteringOptions.storedCraftable];
-        document.getElementById('sortOrderButton').innerHTML = sortOrderDisplay[sortingOptions.sortOrder];
+        syncFilterButtons();
         document.getElementById('autorefresh').checked = settings.autoRefresh;
         document.getElementById('showitemicon').disabled = !iconsEnabled;
         if (!iconsEnabled) settings.showItemIcon = false;
         document.getElementById('showitemicon').checked = settings.showItemIcon;
         selectedGrid = settings.defaultGrid;
+    }
+    function syncFilterButtons(){
+        document.querySelectorAll("[data-filter-control='sortBy']").forEach(function(button) {
+            button.innerHTML = sortByDisplay[sortingOptions.sortBy];
+        });
+        document.querySelectorAll("[data-filter-control='storedCraftable']").forEach(function(button) {
+            button.innerHTML = storedCraftableDisplay[filteringOptions.storedCraftable];
+        });
+        document.querySelectorAll("[data-filter-control='sortOrder']").forEach(function(button) {
+            button.innerHTML = sortOrderDisplay[sortingOptions.sortOrder];
+        });
     }
     initSettings();
     function formatBytes(bytes) {
@@ -1202,6 +1298,9 @@
         function getWebsiteOriginIconMarkup() {
             return "<span class='website-origin-icon' title='Started from website' aria-label='Started from website'>&#127760;</span>";
         }
+        function getCraftingQuantityIconMarkup() {
+            return "<span class='cpu-quantity-icon' aria-label='Crafting quantity' title='Crafting quantity'>⚒</span>";
+        }
         const scheduledReasonText = {
             SOMETHING_STUCK: "Target is full or can't accept the ingredients",
             BLOCKING_MODE: "Blocking Mode",
@@ -1236,10 +1335,11 @@
             if (cluster['startedFromWebsite']) html += getWebsiteOriginIconMarkup();
             html += key + "</div>";
             if (cluster['finalOutput'])
-                html += "<div class='cpu-job-line'>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "<div class='cpu-job-details'>" + formatItemName(cluster['finalOutput'], false) + " x" + formatNumber(cluster['finalOutput']['quantity']) + "</div></div>";
+                html += "<div class='cpu-job-line'>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "<div class='cpu-job-details'>" + formatItemName(cluster['finalOutput'], false) + " " + getCraftingQuantityIconMarkup() + " " + formatNumber(cluster['finalOutput']['quantity']) + "</div></div>";
             html += "</button>";
         }
         document.getElementById('terminalCPUList').innerHTML = html;
+        document.getElementById('terminalMobileCPUList').innerHTML = html;
         if (settings.showItemIcon && iconsToFetch.length > 0) fetchIcons(iconsToFetch);
     }
     function displayCPUDetails(){
@@ -1416,7 +1516,7 @@
                 html += " selected";
             html += "'>" + key;
             if (cluster['finalOutput'])
-                html += " - " + formatItemName(cluster['finalOutput'], false) + " x" + cluster['finalOutput']['quantity'];
+                html += " - " + formatItemName(cluster['finalOutput'], false) + " " + getCraftingQuantityIconMarkup() + " " + formatNumber(cluster['finalOutput']['quantity']);
             if (cluster['usedStorage'] && cluster['usedStorage'] != -1){
                 html += "<br> " + formatBytes(cluster['usedStorage']) + " / " + formatBytes(cluster['availableStorage']);
             }
@@ -1427,6 +1527,7 @@
             html += "</button>";
         }
         document.getElementById('terminalCPUListForJob').innerHTML = html;
+        document.getElementById('terminalMobileCPUListForJob').innerHTML = html;
     }
     function selectCPUForJob(el) {
         let cluster = globalCPUList[el.name];
@@ -1445,7 +1546,7 @@
             document.getElementById(k).style.display = 'none';
         currentWindow = screen;
         for (k of screens[currentWindow])
-            document.getElementById(k).style.display = 'block';
+            document.getElementById(k).style.display = k.indexOf('terminalMobileCPUList') == 0 ? 'flex' : 'block';
         document.getElementById('terminalcontent').style.display = currentWindow == 4 ? 'none' : 'block';
         const activeScreen = currentWindow == 2 ? 1 : currentWindow;
         document.querySelectorAll('#terminalnav .terminal-nav-tab').forEach(function(tab) {
@@ -1471,9 +1572,9 @@
         setCurrentScreen(4);
     }
     function toggleTerminalOptions(){
-        const options = document.querySelector('#terminalOptions > section');
+        const options = document.getElementById('mobileTerminalOptions');
         const isHidden = window.getComputedStyle(options).display === 'none';
-        options.style.display = isHidden ? 'block' : 'none';
+        options.style.display = isHidden ? 'flex' : 'none';
     }
     function displayItemList(shouldFetchIcons = false){
         let html = "<div class='item-grid'>";
@@ -1789,6 +1890,7 @@
         }
         else {
             document.getElementById('terminalCPUListForJob').innerHTML = "...";
+            document.getElementById('terminalMobileCPUListForJob').innerHTML = "...";
             let message = "Sending order...";
             pushLoadingScreen(message);
             $.getJSON('order?grid=' + selectedGrid + '&item=' + hashcode + "&quantity=" + quantity, function(data){
