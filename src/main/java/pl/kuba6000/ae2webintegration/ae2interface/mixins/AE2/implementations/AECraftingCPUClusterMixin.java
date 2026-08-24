@@ -8,6 +8,7 @@ import appeng.api.networking.crafting.CraftingItemList;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
+import appeng.util.ScheduledReason;
 import appeng.util.item.IAEStackList;
 import pl.kuba6000.ae2webintegration.core.interfaces.IAEGenericStack;
 import pl.kuba6000.ae2webintegration.core.interfaces.IAEKey;
@@ -113,6 +114,13 @@ public abstract class AECraftingCPUClusterMixin implements ICraftingCPUCluster {
         ((CraftingCPUCluster) (Object) this).getModernListOfItem(items, CraftingItemList.PENDING);
         IAEStack<?> found = items.findPrecise((IAEStack<?>) (Object) key);
         return found == null ? 0 : found.getStackSize();
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public String web$getScheduledReason(IAEKey key) {
+        ScheduledReason reason = ((CraftingCPUCluster) (Object) this).getScheduledReason((IAEStack) key);
+        return reason == null || reason == ScheduledReason.UNDEFINED ? null : reason.name();
     }
 
     @Override
