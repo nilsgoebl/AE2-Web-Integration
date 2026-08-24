@@ -212,7 +212,7 @@
         }
 
         #terminalwindow{
-            width: 80%;
+            width: 90%;
             float: left;
         }
 
@@ -267,13 +267,32 @@
             font-size: 12px;
             font-weight: bold;
         }
-        .terminal-nav-crafting-icon{
+        .terminal-nav-crafting-icon,
+        .terminal-nav-terminal-icon{
             width: 24px;
             height: 24px;
             image-rendering: pixelated;
         }
         .terminal-nav-icon-fallback{
             display: none;
+        }
+        .filter-icon{
+            position: relative;
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid #e0e0e0;
+        }
+        .filter-icon:after{
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -2px;
+            width: 4px;
+            height: 7px;
+            background-color: #e0e0e0;
         }
         input, select {
             background-color: #2b3555;
@@ -310,6 +329,21 @@
         #terminalcontent{
             width: 100%;
             min-height: 95%;
+        }
+        #terminalSettingsView{
+            padding: 10px;
+        }
+        #terminalSettingsView > section{
+            margin-bottom: 16px;
+        }
+        #terminalSettingsView .settings-title{
+            display: block;
+            margin-bottom: 8px;
+            font-size: 130%;
+            font-weight: 500;
+        }
+        #terminalSettingsView .settings-controls > *{
+            margin: 5px 0;
         }
         #terminalcontent table{
             width: 100%;
@@ -632,6 +666,19 @@
                 min-width: 36px;
                 justify-content: center;
             }
+            #terminalTerminalHeader > input{
+                width: auto;
+                flex: 1 1 180px;
+            }
+            #terminalTerminalHeader .mobile-terminal-options{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px !important;
+                min-width: 36px;
+                margin: 0;
+                font-size: 100% !important;
+            }
             #terminalheader:first-child{
                 text-align: center;
                 font-size: 200% !important;
@@ -718,6 +765,12 @@
                 display: none;
                 font-size: 150%;
             }
+            #terminalSettingsView{
+                padding: 8px;
+            }
+            #terminalSettingsView .settings-controls{
+                font-size: 150%;
+            }
         }
     </style>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -742,28 +795,9 @@
         Error: Invalid grid
     </section> -->
 </section>
-<section id="terminalgrid">
-    <button class='collapsible' id='currentgrid'>No grid selected</button>
-    <section style='display: none;'>
-        <section style='display: flex; flex-direction: row; flex-wrap: wrap;'>
-            <select id="gridselection" size="5" style="margin-right: 10px; overflow-y: auto;" onchange="selectedGridChanged(this);">
-                <!-- <option value="1">Grid 1 owned</option>
-                <option value="2">Grid 2 owned</option>
-                <option value="3">Grid 3 owned</option>
-                <option value="4">Grid 4 owned</option> -->
-            </select>
-            <section>
-                <input type="checkbox" id="thisgridbydefault" disabled onchange="onThisGridByDefaultChange(this);">  <label for="thisgridbydefault">Select this grid by default</label> <br>
-                <input type="checkbox" id="trackthisgrid" disabled onchange="onTrackThisGridChange(this);"> <label for="trackthisgrid">Enable tracking for this grid (track jobs)</label> <br>
-            </section>
-            <span class='note' style="flex: 0 0 100%; margin-top: 10px;">To select a grid, the network must be exposed for web access. On newer versions, place a Wireless Access Point on the network. On older versions, use a Security Terminal and grant the required permissions.</span>
-        </section>
-    </section>
-</section>
 <section id="terminalcontainer">
     <section id="terminaltypes">
         <section id='terminalOptions'>
-            <button class='collapsible mobile-only'>Terminal options</button>
             <section>
                 <button onclick='changeSortingBy(this);' id='sortByButton'>initializing</button>
                 <button onclick='changeStoredCraftable(this);' id='storedCraftableButton'>initializing</button>
@@ -785,14 +819,18 @@
     <section id="terminalwindow">
         <nav id="terminalnav" aria-label="Terminal navigation">
             <button type="button" class="terminal-nav-tab active" data-screen="0" aria-label="Terminal" title="Terminal" onclick="openTerminal();">
-                <span class="terminal-nav-icon terminal-nav-me">ME</span><span class="terminal-nav-label">Terminal</span>
+                <img class="terminal-nav-terminal-icon" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABFElEQVR4Xu2XTQ6CMBBGuY4mLljIxg3EBETBO3gNVt7HcB6Pgww6dZzgT8yEWvO95C0cCNOPtLVEEQAAAN90x3NH6nowIIAPeNDkYX8alDV9/88RfABJkIOWBB8gTdOO1PVgQADfIMCUJPG8I8s8de6Kq9Umc+6KR+W1MZfxbFD3MwcBnjhZAB6sBW3bOit6AcUE6+gvA7jD3Isa/5a1pmmcdbke1P3MCT4ALzoLZAB+ru5nDgIIPAWg/d5+DWz7/xNS9zMn/AC3/doCP1MIAe74CTCyC+m5PVZ7twYQ4FPGjhLfIg9z/Fzdz5zgAyT9RwdZ981Y/miRNZ4SztviJ3mwZZ45V8liUPczBwF8BwAAACC5AHH6TCIfBbiCAAAAAElFTkSuQmCC" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                <span class="terminal-nav-icon terminal-nav-me terminal-nav-icon-fallback">ME</span><span class="terminal-nav-label">Terminal</span>
             </button>
             <button type="button" class="terminal-nav-tab" data-screen="1" aria-label="Crafting" title="Crafting" onclick="openCraftingStatus();">
-                <img class="terminal-nav-crafting-icon" alt="" src="data:image/png;base64,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" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                <img class="terminal-nav-crafting-icon" alt="" src="data:image/png;base64,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" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
                 <span class="terminal-nav-icon terminal-nav-icon-fallback">⚒</span><span class="terminal-nav-label">Crafting</span>
             </button>
             <button type="button" class="terminal-nav-tab" data-screen="3" aria-label="History" title="History" onclick="openCraftingHistory();">
                 <span class="terminal-nav-icon">◷</span><span class="terminal-nav-label">History</span>
+            </button>
+            <button type="button" class="terminal-nav-tab" data-screen="4" aria-label="Settings" title="Settings" onclick="openSettings();">
+                <span class="terminal-nav-icon">⚙</span><span class="terminal-nav-label">Settings</span>
             </button>
             <button type="button" class="terminal-nav-refresh" aria-label="Refresh current view" title="Refresh current view" onclick="refreshTerminal();">
                 <span class="terminal-nav-icon">⟳</span><span class="terminal-nav-label">Refresh</span>
@@ -801,6 +839,7 @@
         <section id="terminalheader">
             <section id="terminalTerminalHeader">
                 <input type="text" id="searchtext" placeholder="Search string" onkeyup="searchStringChanged(this);">
+                <button type="button" class="mobile-only mobile-terminal-options" aria-label="Toggle terminal filters" title="Terminal filters" onclick="toggleTerminalOptions();"><span class="filter-icon" aria-hidden="true"></span></button>
             </section>
             <section id="terminalCPUHeader" style="display: none;">
                 <span id="terminalCPUHeaderText"></span>
@@ -814,23 +853,31 @@
                 <span id="terminalHistoryHeaderText"></span>
             </section>
         </section>
-        <section id="terminalcontent"></section>
-    </section>
-    <section id="terminalsubcontainer">
-        <section id="terminalsubcontainersettings">
-            <header class='mobile-hidden'>Settings</header>
-            <button class='collapsible mobile-only'>Settings</button>
+        <section id="terminalSettingsView" style="display: none;">
             <section>
-                <input type="checkbox" name="autorefresh" id="autorefresh" onchange="changeAutoRefresh(this);"> <label for='autorefresh'>Automatically refresh current screen</label>
-                <br>
-                <input type="checkbox" name="showitemicon" id="showitemicon" onchange="changeShowItemIcon(this);"> <label for="showitemicon">Show item icons</label>
-                <br>
-                <button onclick="purgeIconCache();">Purge icon cache</button>
-                <br>
-                You are logged in as <span id="username" style="font-weight: bold;"></span> <br>
-                <button onclick="document.location.href='?logout'">LogOut</button>
+                <span class="settings-title">Current grid</span>
+                <button class='collapsible' id='currentgrid'>No grid selected</button>
+                <section style='display: none;'>
+                    <section style='display: flex; flex-direction: row; flex-wrap: wrap;'>
+                        <select id="gridselection" size="5" style="margin-right: 10px; overflow-y: auto;" onchange="selectedGridChanged(this);"></select>
+                        <section>
+                            <input type="checkbox" id="thisgridbydefault" disabled onchange="onThisGridByDefaultChange(this);"> <label for="thisgridbydefault">Select this grid by default</label> <br>
+                            <input type="checkbox" id="trackthisgrid" disabled onchange="onTrackThisGridChange(this);"> <label for="trackthisgrid">Enable tracking for this grid (track jobs)</label> <br>
+                        </section>
+                        <span class='note' style="flex: 0 0 100%; margin-top: 10px;">To select a grid, the network must be exposed for web access. On newer versions, place a Wireless Access Point on the network. On older versions, use a Security Terminal and grant the required permissions.</span>
+                    </section>
+                </section>
+            </section>
+            <section class="settings-controls">
+                <span class="settings-title">Settings</span>
+                <label><input type="checkbox" name="autorefresh" id="autorefresh" onchange="changeAutoRefresh(this);"> Automatically refresh current screen</label><br>
+                <label><input type="checkbox" name="showitemicon" id="showitemicon" onchange="changeShowItemIcon(this);"> Show item icons</label><br>
+                <button onclick="purgeIconCache();">Purge icon cache</button><br>
+                You are logged in as <span id="username" style="font-weight: bold;"></span><br>
+                <button onclick="document.location.href='?logout'">Log out</button>
             </section>
         </section>
+        <section id="terminalcontent"></section>
     </section>
 </section>
 
@@ -864,6 +911,7 @@
         ["terminalCPUList", "terminalCPUHeader"],
         ["terminalCPUListForJob", "terminalJobHeader"],
         ["terminalHistoryHeader", "terminalHistoryDetails"],
+        ["terminalSettingsView"],
     ];
     const sortByDisplay = ['A-Z', '# of items', 'Mod'];
     const sortOrderDisplay = ['Ascending', 'Descending'];
@@ -1398,6 +1446,7 @@
         currentWindow = screen;
         for (k of screens[currentWindow])
             document.getElementById(k).style.display = 'block';
+        document.getElementById('terminalcontent').style.display = currentWindow == 4 ? 'none' : 'block';
         const activeScreen = currentWindow == 2 ? 1 : currentWindow;
         document.querySelectorAll('#terminalnav .terminal-nav-tab').forEach(function(tab) {
             tab.classList.toggle('active', Number(tab.dataset.screen) == activeScreen);
@@ -1417,6 +1466,14 @@
     function openCraftingHistory(){
         setCurrentScreen(3);
         getCraftingHistory();
+    }
+    function openSettings(){
+        setCurrentScreen(4);
+    }
+    function toggleTerminalOptions(){
+        const options = document.querySelector('#terminalOptions > section');
+        const isHidden = window.getComputedStyle(options).display === 'none';
+        options.style.display = isHidden ? 'block' : 'none';
     }
     function displayItemList(shouldFetchIcons = false){
         let html = "<div class='item-grid'>";
