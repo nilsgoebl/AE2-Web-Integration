@@ -77,6 +77,16 @@ public abstract class AECraftingCPUClusterMixin implements ICraftingCPUCluster {
     }
 
     @Override
+    public boolean web$isSuspended() {
+        return ((CraftingCPUCluster) (Object) this).isSuspended();
+    }
+
+    @Override
+    public void web$setSuspended(boolean suspended) {
+        ((CraftingCPUCluster) (Object) this).setSuspended(suspended);
+    }
+
+    @Override
     public void web$cancel() {
         ((CraftingCPUCluster) (Object) this).cancel();
     }
