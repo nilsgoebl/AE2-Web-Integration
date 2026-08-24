@@ -637,7 +637,6 @@
             <section>
                 <button onclick='changeSortingBy(this);' id='sortByButton'>initializing</button>
                 <button onclick='changeStoredCraftable(this);' id='storedCraftableButton'>initializing</button>
-                <button onclick='changeItemsFluids(this);' id='itemsFluidsButton'>initializing</button>
                 <button onclick='changeSortOrder(this);' id='sortOrderButton'>initializing</button>
                 <!-- <button>NEI Search?</button> -->
                 <!-- <button>Terminal style?</button> -->
@@ -725,7 +724,6 @@
     filteringOptions = {
         searchString: "",
         storedCraftable: 2, // 0 - stored, 1 - craftable, 2 - both
-        itemsType: 2,       // 0 - items, 1 - fluids, 2 - both
     };
     sortingOptions = {
         sortBy: 0,          // 0 - AZ, 1 - number of items, 2 - mod
@@ -748,7 +746,6 @@
     const sortByDisplay = ['A-Z', '# of items', 'Mod'];
     const sortOrderDisplay = ['Ascending', 'Descending'];
     const storedCraftableDisplay = ['Stored', 'Craftable', 'Stored and craftable'];
-    const itemsTypeDisplay = ['Items', 'Fluid drops', 'Items and fluid drops'];
 
     const BYTE_UNIT = [ "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "BB" ];
     const BYTE_LIMIT = [ 1.0, 1024.0, 1048576.0, 1.073741824E9, 1.099511627776E12, 1.125899906842624E15, 1.15292150460684698E18, 1.1805916207174113E21, 1.2089258196146292E24, 1.2379400392853803E27 ];
@@ -789,10 +786,6 @@
             && item['craftable'] != (filteringOptions.storedCraftable == 1)){
             return false;
         }
-        if (filteringOptions.itemsType != 2
-            && (item['itemid'] == 'ae2fc:fluid_drop:0') != (filteringOptions.itemsType == 1)){
-            return false;
-        }
         if (filteringOptions.searchString && filteringOptions.searchString != ""){
             return item['itemname'].toLowerCase().indexOf(filteringOptions.searchString) !== -1;
         }
@@ -812,13 +805,6 @@
         el.innerHTML = storedCraftableDisplay[filteringOptions.storedCraftable];
         displayItemList();
         setCookie("storedCraftable", filteringOptions.storedCraftable, 7);
-    }
-    function changeItemsFluids(el){
-        filteringOptions.itemsType++;
-        if (filteringOptions.itemsType > 2) filteringOptions.itemsType = 0;
-        el.innerHTML = itemsTypeDisplay[filteringOptions.itemsType];
-        displayItemList();
-        setCookie("itemsType", filteringOptions.itemsType, 7);
     }
     function changeSortOrder(el){
         sortingOptions.sortOrder++;
@@ -915,9 +901,6 @@
         cookie = getCookie("storedCraftable");
         if (cookie != "")
             filteringOptions.storedCraftable = Number(cookie);
-        cookie = getCookie("itemsType");
-        if (cookie != "")
-            filteringOptions.itemsType = Number(cookie);
         cookie = getCookie("sortOrder");
         if (cookie != "")
             sortingOptions.sortOrder = Number(cookie);
@@ -938,7 +921,6 @@
             settings.showItemIcon = Number(cookie) == 1;
         document.getElementById('sortByButton').innerHTML = sortByDisplay[sortingOptions.sortBy];
         document.getElementById('storedCraftableButton').innerHTML = storedCraftableDisplay[filteringOptions.storedCraftable];
-        document.getElementById('itemsFluidsButton').innerHTML = itemsTypeDisplay[filteringOptions.itemsType];
         document.getElementById('sortOrderButton').innerHTML = sortOrderDisplay[sortingOptions.sortOrder];
         document.getElementById('autorefresh').checked = settings.autoRefresh;
         document.getElementById('itemsperrow').value = settings.itemsPerRow;
