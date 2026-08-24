@@ -51,6 +51,27 @@
             flex: 1 1 auto;
             min-width: 0;
         }
+        #terminalCPUList button{
+            text-align: left;
+        }
+        .cpu-name-line, .cpu-job-line{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cpu-job-line img.item-icon{
+            flex: 0 0 48px;
+            width: 48px;
+            height: 48px;
+        }
+        .cpu-job-details{
+            min-width: 0;
+        }
+        .website-origin-icon{
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
         .crafting-plan-layout{
             display: flex;
             align-items: flex-start;
@@ -1034,6 +1055,9 @@
             else image = "data:image/png;base64," + image;
             return "<img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + image + "' />";
         }
+        function getWebsiteOriginIconMarkup() {
+            return "<span class='website-origin-icon' title='Started from website' aria-label='Started from website'>🌐</span>";
+        }
         function displayCPUList(){
             let html = "";
             let iconsToFetch = [];
@@ -1042,10 +1066,11 @@
             html += "<button onclick='selectCPU(this);' name='" + key + "' ";
             if (selectedCPU == key)
                 html += "class='selected'";
-            html += ">" + key;
+            html += "><div class='cpu-name-line'>";
+            if (cluster['startedFromWebsite']) html += getWebsiteOriginIconMarkup();
+            html += key + "</div>";
             if (cluster['finalOutput'])
-                html += "<div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(cluster['finalOutput'], false) + " x" + cluster['finalOutput']['quantity'] + "</div>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "</div>";
-            if (cluster['startedFromWebsite']) html += " [Web]";
+                html += "<div class='cpu-job-line'>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "<div class='cpu-job-details'>" + formatItemName(cluster['finalOutput'], false) + " x" + cluster['finalOutput']['quantity'] + "</div></div>";
             html += "</button>";
         }
         document.getElementById('terminalCPUList').innerHTML = html;
@@ -1069,11 +1094,11 @@
             let iconsToFetch = [];
             if (data['finalOutput'])
                 document.getElementById("terminalCPUHeaderText").innerHTML =
-                    selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'] + getItemIconMarkup(data['finalOutput'], iconsToFetch);
+                    selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'];
             else
                 document.getElementById("terminalCPUHeaderText").innerHTML = selectedCPU + ": Idle";
             if (data['startedFromWebsite'])
-                document.getElementById("terminalCPUHeaderText").innerHTML += " [Started from website]";
+                document.getElementById("terminalCPUHeaderText").innerHTML += " " + getWebsiteOriginIconMarkup();
             let hasTrackingInfo = data['hasTrackingInfo'];
             if (data['items'] && data['items'].length > 0) {
                 document.getElementById("cancelJobOnCPUButton").style.display = 'block';
