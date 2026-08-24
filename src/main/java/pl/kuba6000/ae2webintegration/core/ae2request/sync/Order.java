@@ -20,6 +20,7 @@ public class Order extends ISyncedRequest {
     private IAEKey itemKey;
     private IAEGenericStack itemStack;
     private long quantity;
+    private boolean ignoreMissing;
 
     @Override
     boolean init(Map<String, String> getParams) {
@@ -41,6 +42,7 @@ public class Order extends ISyncedRequest {
             return false;
         }
         this.quantity = parsedQuantity;
+        this.ignoreMissing = getParams.containsKey("ignoremissing");
         itemStack = hashcodeToStack.get(hash);
         if (itemStack == null) {
             deny("ITEM_NOT_FOUND");
@@ -69,7 +71,7 @@ public class Order extends ISyncedRequest {
             }
         }
         if (!allBusy) {
-            Future<IAECraftingJob> job = craftingGrid.web$beginCraftingJob(grid, itemKey, quantity);
+            Future<IAECraftingJob> job = craftingGrid.web$beginCraftingJob(grid, itemKey, quantity, ignoreMissing);
 
             int jobID = gridData.addJob(job);
             JsonObject jobData = new JsonObject();

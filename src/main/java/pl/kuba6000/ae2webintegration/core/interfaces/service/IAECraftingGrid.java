@@ -18,6 +18,14 @@ public interface IAECraftingGrid {
 
     Future<IAECraftingJob> web$beginCraftingJob(IAEGrid grid, IAEKey key, long amount);
 
+    default Future<IAECraftingJob> web$beginCraftingJob(IAEGrid grid, IAEKey key, long amount,
+        boolean ignoreMissing) {
+        if (ignoreMissing) {
+            throw new UnsupportedOperationException("Ignoring missing ingredients is not supported on this platform");
+        }
+        return web$beginCraftingJob(grid, key, amount);
+    }
+
     String web$submitJob(IAECraftingJob job, ICraftingCPUCluster target, boolean prioritizePower, IAEGrid grid);
 
     ICraftingMediumTracker web$getCraftingProviders();

@@ -1010,6 +1010,7 @@
     currentJob = {
         id: -1,
         itemHash: -1,
+        quantity: -1,
         finalOutput: null,
         bytesTotal: -1,
     }
@@ -1871,6 +1872,18 @@
             popLoadingScreen(message);
         });
     }
+    function openCraftingJob(jobData, hashcode, quantity) {
+        if (!jobData['jobID']) return;
+        setCurrentScreen(2);
+        document.getElementById("terminalcontent").innerHTML = ";)";
+        document.getElementById("terminalJobHeaderText").innerHTML = "Calculating, please wait...";
+        cpuForJob = "";
+        currentJob.id = jobData['jobID'];
+        currentJob.itemHash = hashcode;
+        currentJob.quantity = quantity;
+        currentJob.finalOutput = jobData['finalOutput'];
+        setTimeout(updateCraftingPlan, 1000);
+    }
     function beginOrderingItem(hashcode){
         if (selectedGrid == -1)
             return;
@@ -1901,19 +1914,7 @@
                     return;
                 }
                 data = data.data;
-                if (data['jobID']){
-                    setCurrentScreen(2);
-                    document.getElementById("terminalcontent").innerHTML = ";)";
-                    document.getElementById("terminalJobHeaderText").innerHTML = "Calculating, please wait...";
-                    cpuForJob = "";
-                    currentJob.id = data['jobID'];
-                    currentJob.itemHash = hashcode;
-                    currentJob.finalOutput = data['finalOutput'];
-                    setTimeout(updateCraftingPlan, 1000);
-                }
-                else{
-                    //setCurrentScreen(0);
-                }
+                openCraftingJob(data, hashcode, quantity);
                 popLoadingScreen(message);
             });
         }
@@ -1938,11 +1939,13 @@
                 let html = "";
                 let htmlHeader = "";
                 if (data['isSimulating']){
-                    htmlHeader += "[Simulation :(] ";
+                    htmlHeader += "<span class='redtext' title='Missing ingredients' aria-label='Missing ingredients'>&#10060;</span> ";
                 }
-                htmlHeader += "Crafting Plan - " + data['bytesTotal'] + "bytes";
+                htmlHeader += "Crafting Plan - " + data['bytesTotal'] + " bytes";
                 currentJob.bytesTotal = data['bytesTotal'];
-                if (!data['isSimulating']){
+                if (data['isSimulating']){
+                    htmlHeader += "<button onclick='queueCurrentJobAnyway();'>Queue anyways</button>";
+                } else {
                     htmlHeader += "<button onclick='startCurrentJob();'>Start</button>";
                     updateCPUListForJob();
                 }
@@ -2007,6 +2010,29 @@
                 return;
             }
             data = data.data;
+        });
+    }
+    function queueCurrentJobAnyway(){
+        if (selectedGrid == -1 || currentWindow != 2 || currentJob.itemHash == -1 || currentJob.quantity <= 0)
+            return;
+        let message = "Preparing queued craft...";
+        pushLoadingScreen(message);
+        const previousJobID = currentJob.id;
+        $.getJSON('job?grid=' + selectedGrid + '&id=' + previousJobID + '&cancel', function(cancelData){
+            if (cancelData.status !== "OK"){
+                showAlert(cancelData.status + ": " + cancelData.data);
+                popLoadingScreen(message);
+                return;
+            }
+            $.getJSON('order?grid=' + selectedGrid + '&item=' + currentJob.itemHash + '&quantity=' + currentJob.quantity + '&ignoremissing', function(data){
+                if (data.status !== "OK"){
+                    showAlert(data.status + ": " + data.data);
+                    popLoadingScreen(message);
+                    return;
+                }
+                openCraftingJob(data.data, currentJob.itemHash, currentJob.quantity);
+                popLoadingScreen(message);
+            });
         });
     }
     function startCurrentJob(){
