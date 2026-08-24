@@ -56,12 +56,12 @@
             border-radius: 1px;
         }
         .item-card.active{
-            background-color: rgb(73, 105, 20);
-            border-color: rgb(53, 77, 14);
+            background: linear-gradient(rgba(69, 160, 33, 0.35), rgba(69, 160, 33, 0.35)), #2b3555;
+            border-color: #45A021;
         }
         .item-card.pending{
-            background-color: rgb(92, 92, 15);
-            border-color: rgb(71, 71, 11);
+            background: linear-gradient(rgba(255, 247, 170, 0.35), rgba(255, 247, 170, 0.35)), #2b3555;
+            border-color: #FFF7AA;
         }
         .item-card.storage{
             background-color: #2b3555;
@@ -69,6 +69,14 @@
         .item-card.missing{
             background-color: rgb(112, 0, 0);
             border-color: rgb(85, 0, 0);
+        }
+        .item-card.reason-stuck{
+            background: linear-gradient(rgba(201, 165, 58, 0.35), rgba(201, 165, 58, 0.35)), #2b3555;
+            border-color: #C9A53A;
+        }
+        .item-card.reason-error{
+            background: linear-gradient(rgba(224, 112, 112, 0.35), rgba(224, 112, 112, 0.35)), #2b3555;
+            border-color: #E07070;
         }
         .item-card .storage-icon-row{
             min-height: 48px;
@@ -1026,6 +1034,28 @@
     function formatNumber(num){
         return num.toLocaleString();
     }
+    // Matches AE2's ReadableNumberConverter.toWideReadableForm: a maximum of four characters,
+    // a single truncated decimal when it fits, and the postfix sequence kMGTPE.
+    function formatGridNumber(num){
+        let value = Math.trunc(Number(num));
+        if (!Number.isFinite(value) || value < 0) return String(num);
+        if (String(value).length <= 4) return String(value);
+
+        const postfixes = 'kMGTPE';
+        let displayed = value;
+        let scaled = value;
+        let postfixIndex = -1;
+        do {
+            displayed = scaled;
+            scaled = Math.floor(scaled / 1000);
+            postfixIndex++;
+        } while (String(scaled).length + 1 > 4 && postfixIndex < postfixes.length - 1);
+
+        const postfix = postfixes[postfixIndex];
+        const withDecimal = (Math.floor((displayed / 1000) * 10) / 10).toFixed(1).replace(/\.0$/, '') + postfix;
+        const withoutDecimal = String(scaled) + postfix;
+        return withDecimal.length <= 4 ? withDecimal : withoutDecimal;
+    }
     function formatTime(time){
         let s = Number(time) / 1000;
         let format = 's';
@@ -1137,6 +1167,15 @@
             const reason = scheduledReasonText[item['scheduledReason']];
             return reason ? "<br><span class='scheduled-reason'>" + reason + "</span>" : "";
         }
+        function getCraftingCardClass(item) {
+            if (item['scheduledReason'] === 'SOMETHING_STUCK') return 'reason-stuck';
+            if (item['scheduledReason'] === 'UNSUPPORTED_STACK'
+                || item['scheduledReason'] === 'SAME_NETWORK'
+                || item['scheduledReason'] === 'NO_TARGET') return 'reason-error';
+            if (item['active'] > 0) return 'active';
+            if (item['pending'] > 0) return 'pending';
+            return 'storage';
+        }
         function displayCPUList(){
             let html = "";
             let iconsToFetch = [];
@@ -1149,7 +1188,7 @@
             if (cluster['startedFromWebsite']) html += getWebsiteOriginIconMarkup();
             html += key + "</div>";
             if (cluster['finalOutput'])
-                html += "<div class='cpu-job-line'>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "<div class='cpu-job-details'>" + formatItemName(cluster['finalOutput'], false) + " x" + cluster['finalOutput']['quantity'] + "</div></div>";
+                html += "<div class='cpu-job-line'>" + getItemIconMarkup(cluster['finalOutput'], iconsToFetch) + "<div class='cpu-job-details'>" + formatItemName(cluster['finalOutput'], false) + " x" + formatNumber(cluster['finalOutput']['quantity']) + "</div></div>";
             html += "</button>";
         }
         document.getElementById('terminalCPUList').innerHTML = html;
@@ -1174,7 +1213,7 @@
             let cpuTitlePrefix = data['startedFromWebsite'] ? getWebsiteOriginIconMarkup() + " " : "";
             if (data['finalOutput'])
                 document.getElementById("terminalCPUHeaderText").innerHTML =
-                    cpuTitlePrefix + selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + data['finalOutput']['quantity'];
+                    cpuTitlePrefix + selectedCPU + ": Crafting " + formatItemName(data['finalOutput'], false) + " x" + formatNumber(data['finalOutput']['quantity']);
             else
                 document.getElementById("terminalCPUHeaderText").innerHTML = cpuTitlePrefix + selectedCPU + ": Idle";
             let hasTrackingInfo = data['hasTrackingInfo'];
@@ -1185,21 +1224,15 @@
                     let items = data['items'];
                     for(let i = 0; i < items.length; i++){
                         let item = items[i];
-                        let el = '';
-                        if(item['active'] > 0)
-                            el = 'active';
-                        else if(item['pending'] > 0)
-                            el = 'pending';
-                        else
-                            el = 'storage';
+                        let el = getCraftingCardClass(item);
                         html += "<div class='item-card " + el + "'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item);
-                        if (item['stored'] > 0) html += "<br>Stored: " + formatNumber(item['stored']);
-                        if (item['active'] > 0) html += "<br>Crafting: " + formatNumber(item['active']);
-                        if (item['pending'] > 0) html += "<br>Scheduled: " + formatNumber(item['pending']);
+                        if (item['stored'] > 0) html += "<br>Stored: " + formatGridNumber(item['stored']);
+                        if (item['active'] > 0) html += "<br>Crafting: " + formatGridNumber(item['active']);
+                        if (item['pending'] > 0) html += "<br>Scheduled: " + formatGridNumber(item['pending']);
                         html += getScheduledReasonMarkup(item);
                         if (hasTrackingInfo && item['timeSpentCrafting']){
                             html += "<br>Time: " + formatTime(item['timeSpentCrafting']) + " (" + formatPercent(item['shareInCraftingTimeCombined']) + ")";
-                            html += "<br>Crafted total: " + formatNumber(item['craftedTotal']) + " (" + formatNumber(item['craftsPerSec']) + "/s)";
+                            html += "<br>Crafted total: " + formatGridNumber(item['craftedTotal']) + " (" + formatGridNumber(item['craftsPerSec']) + "/s)";
                         }
                         html += "</div>" + getItemIconMarkup(item, iconsToFetch) + "</div></div>";
                     }
@@ -1402,10 +1435,10 @@
                 imgSrc = "data:image/png;base64," + imgSrc;
             }
             if (settings.showItemIcon){
-                html += "<div class='item-card storage'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item) + "<br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</div><img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + imgSrc + "' /></div></div>";
+                html += "<div class='item-card storage'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item) + "<br>Stored: " + formatGridNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</div><img class='item-icon' data-icon-hash='" + item['hashcode'] + "' src='" + imgSrc + "' /></div></div>";
             }
             else {
-                html += "<div class='item-card storage'>" + formatItemName(item) + "<br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</div>";
+                html += "<div class='item-card storage'>" + formatItemName(item) + "<br>Stored: " + formatGridNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</div>";
             }
         }
         html += "</div>";
@@ -1652,9 +1685,9 @@
                 let name = skipSpecialFormat(item['itemname']);
                 itemShareData.push({'name': name, 'timings': item['timings']});
 
-                html += "<div class='item-card storage'>" + formatItemName(item, false) + " x" + formatNumber(item['craftedTotal']);
+                html += "<div class='item-card storage'>" + formatItemName(item, false) + " x" + formatGridNumber(item['craftedTotal']);
                 html += "<br>Time: " + formatTime(item['timeSpentOn']) + " (" + formatPercent(item['shareInCraftingTimeCombined']) + ")";
-                html += "<br>Efficiency: " + formatNumber(item['craftsPerSec']) + "/s";
+                html += "<br>Efficiency: " + formatGridNumber(item['craftsPerSec']) + "/s";
                 html += "</div>";
             }
             html += "</div>";
@@ -1770,7 +1803,7 @@
                     const finalOutput = currentJob.finalOutput;
                     html += "<div class='crafting-plan-layout'>";
                     if (finalOutput){
-                        html += "<aside class='crafting-plan-result'><strong>Result</strong>" + jobIcon(finalOutput) + formatItemName(finalOutput, false) + " x" + formatNumber(finalOutput['quantity']) + "</aside>";
+                        html += "<aside class='crafting-plan-result'><strong>Result</strong>" + jobIcon(finalOutput) + formatItemName(finalOutput, false) + " x" + formatGridNumber(finalOutput['quantity']) + "</aside>";
                     }
                     html += "<div class='crafting-plan-items'><div class='item-grid'>";
                     let items = data['plan'];
@@ -1779,13 +1812,13 @@
 
                         html += "<div class='item-card " + (item['missing'] > 0 ? 'missing' : 'storage') + "'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item);
                         if (item['missing'] > 0)
-                            html += "<br>Missing: " + formatNumber(item['missing']);
+                            html += "<br>Missing: " + formatGridNumber(item['missing']);
                         if (item['requested'] > 0)
-                            html += "<br>To craft: " + formatNumber(item['requested']);
+                            html += "<br>To craft: " + formatGridNumber(item['requested']);
                         if (item['steps'] > 0)
-                            html += "<br>Steps: " + formatNumber(item['steps']);
+                            html += "<br>Steps: " + formatGridNumber(item['steps']);
                         if (item['stored'] > 0)
-                            html += "<br>Available: " + formatNumber(item['stored']);
+                            html += "<br>Available: " + formatGridNumber(item['stored']);
                         if (item['usedPercent'] > 0)
                             html += "<br>Used: " + formatPercent(item['usedPercent']);
                         html += "</div>" + jobIcon(item) + "</div></div>";
