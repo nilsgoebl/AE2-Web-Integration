@@ -69,6 +69,7 @@ public class GetCPU extends ISyncedRequest {
             cpu.web$getAllItems(allItems);
             for (IAEGenericStack stack : allItems.web$stacks()) {
                 IAEKey key = stack.web$what();
+                AE2Controller.hashcodeToStack.put(stack.hashCode(), stack);
                 JSON_CompactedItem compactedItem = JSON_CompactedItem.create(key);
                 JSON_CompactedItem merged = prep.computeIfAbsent(compactedItem, k -> compactedItem);
                 merged.active += cpu.web$getActiveItems(key);

@@ -7,8 +7,7 @@ public class JSON_CompactedItem {
 
     @GSONUtils.SkipGSON
     private final IAEKey internalKey;
-    @GSONUtils.SkipGSON
-    private final int hashcode;
+    public final int hashcode;
 
     public final String itemid;
     public final String itemname;
