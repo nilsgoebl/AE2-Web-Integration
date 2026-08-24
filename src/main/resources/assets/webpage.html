@@ -634,9 +634,9 @@
                 <br>
                 <input type="checkbox" name="showitemid" id="showitemid" onchange="changeShowItemID(this);"> <label for="showitemid">Show item id</label>
                 <br>
-                <input type="checkbox" name="showitemicon" id="showitemicon" onchange="changeShowItemIcon(this);" disabled title="Work in progress"> <label for="showitemicon" title="Work in progress">Show item icons [work in progress]</label>
+                <input type="checkbox" name="showitemicon" id="showitemicon" onchange="changeShowItemIcon(this);"> <label for="showitemicon">Show item icons</label>
                 <br>
-                <button onclick="if(confirm('Are you sure you want to purge icons cache? This will result all icons to be redownloaded!')){ localStorage.clear(); location.reload(); }">Purge icon cache</button>
+                <button onclick="purgeIconCache();">Purge icon cache</button>
                 <br>
                 You are logged in as <span id="username" style="font-weight: bold;"></span> <br>
                 <button onclick="document.location.href='?logout'">LogOut</button>
@@ -650,6 +650,7 @@
     const username = "_REPLACE_ME_USERNAME";
     const isAdmin = _REPLACE_ME_IS_ADMIN;
     const isOutdated = _REPLACE_ME_VERSION_OUTDATED;
+    const iconsEnabled = _REPLACE_ME_ICONS_ENABLED;
     document.getElementById('username').innerText = username;
     selectedGrid = -1;
     globalItemList = {};
@@ -877,6 +878,8 @@
         document.getElementById('itemsperrow').value = settings.itemsPerRow;
         document.getElementById('numberformat').value = settings.numberFormat;
         document.getElementById('showitemid').checked = settings.showItemID;
+        document.getElementById('showitemicon').disabled = !iconsEnabled;
+        if (!iconsEnabled) settings.showItemIcon = false;
         document.getElementById('showitemicon').checked = settings.showItemIcon;
         selectedGrid = settings.defaultGrid;
     }
@@ -1251,7 +1254,7 @@
                 imgSrc = "data:image/png;base64," + imgSrc;
             }
             if (settings.showItemIcon){
-                html += "<td class='storage'>" + formatItemName(item) + "<img src='" + imgSrc + "' /><br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</td>";
+                html += "<td class='storage'>" + formatItemName(item) + "<img id='itemicon" + item['hashcode'] + "' src='" + imgSrc + "' /><br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</td>";
             }
             else {
                 html += "<td class='storage'>" + formatItemName(item) + "<br>Stored: " + formatNumber(item['quantity']) + (item['craftable'] ? '<br><button onclick="beginOrderingItem(' + item['hashcode'] + ');">order</button>' : '') + "</td>";
@@ -1710,30 +1713,127 @@
         });
     }
 
+    // --- Item icon cache -------------------------------------------------------
+    // Icons live in IndexedDB, not localStorage: browsers cap localStorage at roughly 5 MB per
+    // origin, which a real network's icon set outgrows within a single session. IndexedDB quotas
+    // are far larger. A small in-memory mirror keeps list rendering synchronous.
+    let iconMemCache = {};          // hashcode -> base64 png (only icons that really exist)
+    const iconMissingThisSession = {}; // hashcodes answered with the placeholder; not re-requested
+    let iconDbPromise = null;
+    // Must stay identical to the placeholder embedded in IconStore on the server.
+    const ICON_PLACEHOLDER_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR42mNYsWLFf0oww6gBowaMGjBcDAAAk9v3H//7IkQAAAAASUVORK5CYII=";
+
+    function openIconDatabase(){
+        if (iconDbPromise === null){
+            iconDbPromise = new Promise(function(resolve, reject){
+                const request = indexedDB.open("ae2webintegration", 1);
+                request.onupgradeneeded = function(){ request.result.createObjectStore("icons"); };
+                request.onsuccess = function(){ resolve(request.result); };
+                request.onerror = function(){ reject(request.error); };
+            });
+        }
+        return iconDbPromise;
+    }
+
+    function idbGetIcons(hashcodes){ // Promise of {hashcode: base64 png}
+        return openIconDatabase().then(function(db){
+            return new Promise(function(resolve, reject){
+                const result = {};
+                const tx = db.transaction("icons", "readonly");
+                const store = tx.objectStore("icons");
+                for(let i = 0; i < hashcodes.length; i++){
+                    const req = store.get("itemIcon" + hashcodes[i]);
+                    req.onsuccess = function(){ if (req.result !== undefined) result[hashcodes[i]] = req.result; };
+                }
+                tx.oncomplete = function(){ resolve(result); };
+                tx.onerror = function(){ reject(tx.error); };
+            });
+        }).catch(function(){ return {}; }); // no IndexedDB (private mode etc.): degrade to always-fetch
+    }
+
+    function idbPutIcons(entries){ // entries: [{hashcode, pngData}]
+        return openIconDatabase().then(function(db){
+            return new Promise(function(resolve){
+                const tx = db.transaction("icons", "readwrite");
+                const store = tx.objectStore("icons");
+                for(let i = 0; i < entries.length; i++){
+                    store.put(entries[i]['pngData'], "itemIcon" + entries[i]['hashcode']);
+                }
+                tx.oncomplete = function(){ resolve(); };
+                tx.onerror = function(){ resolve(); }; // quota errors must never break the UI
+            });
+        }).catch(function(){});
+    }
+
+    function idbClearIcons(){
+        return openIconDatabase().then(function(db){
+            return new Promise(function(resolve){
+                const tx = db.transaction("icons", "readwrite");
+                tx.objectStore("icons").clear();
+                tx.oncomplete = function(){ resolve(); };
+                tx.onerror = function(){ resolve(); };
+            });
+        }).catch(function(){});
+    }
+
+    function purgeIconCache(){
+        if (!confirm('Are you sure you want to purge icons cache? This will result all icons to be redownloaded!')) return;
+        idbClearIcons().then(function(){
+            iconMemCache = {};
+            location.reload();
+        });
+    }
+
     function getIcon(item) {
-        let data = localStorage.getItem("itemIcon" + item['hashcode']);
-        if (data === null)
-            return null;
-        return data;
+        return iconMemCache[item['hashcode']] || null;
+    }
+
+    // Patches already-rendered <img> elements once icons become available.
+    function applyIcons(byHash) {
+        for (const hash in byHash){
+            if (!(byHash.hasOwnProperty(hash))) continue;
+            const img = document.getElementById("itemicon" + hash);
+            if (img) img.src = "data:image/png;base64," + byHash[hash];
+        }
     }
 
     function fetchIcons(items) {
-        let par = '';
+        let hashes = [];
         for(let i = 0; i < items.length; i++){
-            par += items[i]['hashcode'] + ',';
+            hashes.push(items[i]['hashcode']);
         }
-        $.getJSON('icon?items=' + par, function(data){
-            if (data.status !== "OK"){
-                showAlert(data.status + ": " + data.data);
-                return;
+        idbGetIcons(hashes).then(function(cached){
+            applyIcons(cached);
+            for (const hash in cached){
+                iconMemCache[hash] = cached[hash];
             }
-            data = data.data;
-            console.log(data);
-            let items = data;
-            for(let i = 0; i < items.length; i++){
-                localStorage.setItem("itemIcon" + items[i]['hashcode'], items[i]['pngData']);
-            }
-            refreshDisplay();
+            const missing = hashes.filter(function(hash){
+                return !(hash in iconMemCache) && !(hash in iconMissingThisSession);
+            });
+            if (missing.length === 0) return;
+            $.getJSON('icon?items=' + missing.join(','), function(data){
+                if (data.status !== "OK"){
+                    showAlert(data.status + ": " + data.data);
+                    return;
+                }
+                data = data.data;
+                const fetched = [];
+                const byHash = {};
+                for(let i = 0; i < data.length; i++){
+                    const entry = data[i];
+                    byHash[entry['hashcode']] = entry['pngData'];
+                    if (entry['pngData'] === ICON_PLACEHOLDER_PNG_BASE64){
+                        // No rendered icon exists server-side; remember it so auto-refresh
+                        // does not request this item again until the page is reloaded.
+                        iconMissingThisSession[entry['hashcode']] = true;
+                        continue;
+                    }
+                    iconMemCache[entry['hashcode']] = entry['pngData'];
+                    fetched.push(entry);
+                }
+                idbPutIcons(fetched);
+                applyIcons(byHash);
+            });
         });
     }
 

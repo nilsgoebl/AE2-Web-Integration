@@ -35,6 +35,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import pl.kuba6000.ae2webintegration.core.ae2request.async.GetIcons;
 import pl.kuba6000.ae2webintegration.core.ae2request.async.GetTracking;
 import pl.kuba6000.ae2webintegration.core.ae2request.async.GetTrackingHistory;
 import pl.kuba6000.ae2webintegration.core.ae2request.async.GridSettings;
@@ -267,6 +268,7 @@ public class AE2Controller {
                 newServer.createContext("/get", new SyncedRequestHandler(GetCPU.class));
                 newServer.createContext("/cancelcpu", new SyncedRequestHandler(CancelCPU.class));
                 newServer.createContext("/items", new SyncedRequestHandler(GetItems.class));
+                newServer.createContext("/icon", new ASyncRequestHandler(GetIcons.class));
                 newServer.createContext("/order", new SyncedRequestHandler(Order.class));
                 newServer.createContext("/job", new SyncedRequestHandler(Job.class));
                 newServer.createContext("/trackinghistory", new ASyncRequestHandler(GetTrackingHistory.class));
@@ -1032,6 +1034,8 @@ public class AE2Controller {
                 }
             }
             response = response.replace("_REPLACE_ME_IS_PUBLIC_MODE", Config.AE_PUBLIC_MODE() ? "true" : "false");
+            response = response
+                .replace("_REPLACE_ME_ICONS_ENABLED", Config.getIconsDirectory() != null ? "true" : "false");
             response = response.replace(
                 "_REPLACE_ME_VERSION_OUTDATED",
                 Config.CHECK_FOR_UPDATES() && VersionChecker.isOutdated() ? "true" : "false");

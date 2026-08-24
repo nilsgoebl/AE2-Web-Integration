@@ -34,6 +34,7 @@ public class ConfigBootstrap {
     // --- Tracking ---
 
     public static IConfigValue<Boolean> trackingTrackMachineCraftingValue = () -> false;
+    public static IConfigValue<String> iconsDirectoryValue = () -> "";
 
     private ConfigBootstrap() {}
 
@@ -100,6 +101,13 @@ public class ConfigBootstrap {
             "track_machine_crafting",
             false,
             "Track crafting jobs run directly by machines? (Not manually ordered)");
+
+        iconsDirectoryValue = builder.defineString(
+            "icons_directory",
+            "",
+            "Folder holding pre-rendered item icons, relative to this config directory (absolute paths are"
+                + " also accepted). Icons are looked up as <itemid with ':' replaced by the path separator>"
+                + " + '.png', e.g. minecraft/stone.png. Keep empty to disable item icons on the website.");
     }
 
 }

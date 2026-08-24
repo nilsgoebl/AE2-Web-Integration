@@ -29,6 +29,7 @@ class ConfigBootstrapTest {
         ConfigBootstrap.discordMinimumCraftingDurationSecondsValue = () -> 0;
         ConfigBootstrap.discordMinimumCraftingAmountValue = () -> 0;
         ConfigBootstrap.trackingTrackMachineCraftingValue = () -> false;
+        ConfigBootstrap.iconsDirectoryValue = () -> "";
     }
 
     @Test
@@ -36,8 +37,8 @@ class ConfigBootstrapTest {
         RecordingConfigBuilder builder = new RecordingConfigBuilder();
         ConfigBootstrap.init(builder);
 
-        // Should have exactly 12 config key definitions
-        assertEquals(12, builder.calls.size(), "expected exactly 12 config key definitions");
+        // Should have exactly 13 config key definitions
+        assertEquals(13, builder.calls.size(), "expected exactly 13 config key definitions");
 
         // Verify all expected keys with their types
         assertContainsCall("int", "port", builder.calls);
@@ -52,6 +53,7 @@ class ConfigBootstrapTest {
         assertContainsCall("int", "discord_minimum_crafting_duration_seconds", builder.calls);
         assertContainsCall("int", "discord_minimum_crafting_amount", builder.calls);
         assertContainsCall("boolean", "track_machine_crafting", builder.calls);
+        assertContainsCall("string", "icons_directory", builder.calls);
     }
 
     @Test
@@ -94,6 +96,7 @@ class ConfigBootstrapTest {
                     break;
                 case "discord_webhook":
                 case "discord_role_id":
+                case "icons_directory":
                     assertEquals("", call.defValue, call.key + " default");
                     break;
                 default:

@@ -61,6 +61,11 @@ public class Config {
         return ConfigBootstrap.trackingTrackMachineCraftingValue.get();
     }
 
+    // Icons
+    public static String ICONS_DIRECTORY() {
+        return ConfigBootstrap.iconsDirectoryValue.get();
+    }
+
     // --- Directory / file setup ---
 
     public static void init(File configDirectory) {
@@ -76,5 +81,22 @@ public class Config {
 
     public static File getConfigFile(String fileName) {
         return new File(configDirectory, fileName);
+    }
+
+    /**
+     * The folder item icons are served from, or null when icons are disabled (empty config value).
+     * Relative values resolve against this mod's config directory, so the default "icons" lands in
+     * config/ae2webintegration/icons no matter what the server's working directory is.
+     */
+    public static File getIconsDirectory() {
+        String value = ICONS_DIRECTORY();
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        File directory = new File(value);
+        if (!directory.isAbsolute()) {
+            directory = new File(configDirectory, value);
+        }
+        return directory;
     }
 }
