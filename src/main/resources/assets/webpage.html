@@ -73,6 +73,9 @@
         .item-card .storage-icon-row{
             min-height: 48px;
         }
+        .scheduled-reason{
+            color: #FFFF55;
+        }
         .storage-icon-row{
             display: flex;
             align-items: center;
@@ -1045,6 +1048,19 @@
         function getWebsiteOriginIconMarkup() {
             return "<span class='website-origin-icon' title='Started from website' aria-label='Started from website'>&#127760;</span>";
         }
+        const scheduledReasonText = {
+            SOMETHING_STUCK: "Target is full or can't accept the ingredients",
+            BLOCKING_MODE: "Blocking Mode",
+            LOCK_MODE: "Lock Mode",
+            NO_TARGET: "Can't find a target to push to",
+            NOT_ENOUGH_INGREDIENTS: "Not enough ingredients",
+            SAME_NETWORK: "Target interface is in the same network",
+            UNSUPPORTED_STACK: "Contains a stack that is not supported by any target around the interface"
+        };
+        function getScheduledReasonMarkup(item) {
+            const reason = scheduledReasonText[item['scheduledReason']];
+            return reason ? "<br><span class='scheduled-reason'>" + reason + "</span>" : "";
+        }
         function displayCPUList(){
             let html = "";
             let iconsToFetch = [];
@@ -1100,7 +1116,11 @@
                             el = 'pending';
                         else
                             el = 'storage';
-                        html += "<div class='item-card " + el + "'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item) + "<br>Crafting: " + formatNumber(item['active']) + "<br>Scheduled: " + formatNumber(item['pending']) + "<br>Stored: " + formatNumber(item['stored']);
+                        html += "<div class='item-card " + el + "'><div class='storage-icon-row'><div class='storage-item-details'>" + formatItemName(item);
+                        if (item['stored'] > 0) html += "<br>Stored: " + formatNumber(item['stored']);
+                        if (item['active'] > 0) html += "<br>Crafting: " + formatNumber(item['active']);
+                        if (item['pending'] > 0) html += "<br>Scheduled: " + formatNumber(item['pending']);
+                        html += getScheduledReasonMarkup(item);
                         if (hasTrackingInfo && item['timeSpentCrafting']){
                             html += "<br>Time: " + formatTime(item['timeSpentCrafting']) + " (" + formatPercent(item['shareInCraftingTimeCombined']) + ")";
                             html += "<br>Crafted total: " + formatNumber(item['craftedTotal']) + " (" + formatNumber(item['craftsPerSec']) + "/s)";

@@ -14,6 +14,8 @@ public class JSON_CompactedItem {
     public long active = 0;
     public long pending = 0;
     public long stored = 0;
+    /** AE2 ScheduledReason enum name, present when an item is queued but cannot progress. */
+    public String scheduledReason;
     public long timeSpentCrafting = 0;
     public long craftedTotal = 0;
     public double shareInCraftingTime = 0d;

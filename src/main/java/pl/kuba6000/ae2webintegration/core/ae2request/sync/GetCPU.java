@@ -75,6 +75,7 @@ public class GetCPU extends ISyncedRequest {
                 merged.active += cpu.web$getActiveItems(key);
                 merged.pending += cpu.web$getPendingItems(key);
                 merged.stored += cpu.web$getStorageItems(key);
+                if (merged.pending > 0) merged.scheduledReason = cpu.web$getScheduledReason(key);
             }
 
             if (clusterData.hasTrackingInfo) {

@@ -24,6 +24,13 @@ public interface ICraftingCPUCluster {
 
     long web$getPendingItems(IAEKey key);
 
+    /**
+     * Returns AE2's own scheduled-reason enum name for this stack, or {@code null} when it is progressing.
+     */
+    default String web$getScheduledReason(IAEKey key) {
+        return null;
+    }
+
     long web$getStorageItems(IAEKey key);
 
     void web$getAllItems(IStackList list);
